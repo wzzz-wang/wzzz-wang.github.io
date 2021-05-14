@@ -20,28 +20,20 @@
     var CONFIG = {"hostname":"wzzz-wang.github.io","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="Docker 操作指北">
+  <meta name="description" content="有个测试的K8S集群，自己可以随便玩，想着给自己创建一个账号，并且赋予特定权限，也算是记录一下。这里创建的是Service Accounts账号，Service Accounts的含义后续再写。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Docker 操作指北">
-<meta property="og:url" content="http://wzzz-wang.github.io/2021/04/08/Docker%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97/index.html">
+<meta property="og:title" content="K8S创建SA用户">
+<meta property="og:url" content="http://wzzz-wang.github.io/2021/05/14/K8S%E5%88%9B%E5%BB%BASA%E7%94%A8%E6%88%B7/index.html">
 <meta property="og:site_name" content="Wzzz">
-<meta property="og:description" content="Docker 操作指北">
+<meta property="og:description" content="有个测试的K8S集群，自己可以随便玩，想着给自己创建一个账号，并且赋予特定权限，也算是记录一下。这里创建的是Service Accounts账号，Service Accounts的含义后续再写。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://wzzz-wang.github.io/2021/04/08/Docker%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97/16080008810914.jpg">
-<meta property="og:image" content="http://wzzz-wang.github.io/2021/04/08/Docker%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97/16080007788786.jpg">
-<meta property="og:image" content="http://wzzz-wang.github.io/2021/04/08/Docker%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97/16080011490036.jpg">
-<meta property="og:image" content="http://wzzz-wang.github.io/2021/04/08/Docker%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97/16080021017784.jpg">
-<meta property="og:image" content="http://wzzz-wang.github.io/2021/04/08/Docker%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97/16080022845311.jpg">
-<meta property="og:image" content="http://wzzz-wang.github.io/2021/04/08/Docker%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97/16080023732830.jpg">
-<meta property="og:image" content="http://wzzz-wang.github.io/2021/04/08/Docker%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97/16080025060949.jpg">
-<meta property="article:published_time" content="2021-04-08T08:16:18.067Z">
-<meta property="article:modified_time" content="2021-04-15T04:33:35.502Z">
+<meta property="article:published_time" content="2021-05-14T03:09:04.000Z">
+<meta property="article:modified_time" content="2021-05-14T06:44:59.377Z">
 <meta property="article:author" content="Wzzz">
-<meta property="article:tag" content="基础学习">
+<meta property="article:tag" content="K8S基础">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://wzzz-wang.github.io/2021/04/08/Docker%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97/16080008810914.jpg">
 
-<link rel="canonical" href="http://wzzz-wang.github.io/2021/04/08/Docker%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97/">
+<link rel="canonical" href="http://wzzz-wang.github.io/2021/05/14/K8S%E5%88%9B%E5%BB%BASA%E7%94%A8%E6%88%B7/">
 
 
 <script id="page-configurations">
@@ -54,7 +46,7 @@
   };
 </script>
 
-  <title>Docker 操作指北 | Wzzz</title>
+  <title>K8S创建SA用户 | Wzzz</title>
   
 
 
@@ -180,7 +172,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://wzzz-wang.github.io/2021/04/08/Docker%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97/">
+    <link itemprop="mainEntityOfPage" href="http://wzzz-wang.github.io/2021/05/14/K8S%E5%88%9B%E5%BB%BASA%E7%94%A8%E6%88%B7/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/dog.jpeg">
@@ -193,7 +185,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Docker 操作指北<a href="https://github.com/user-name/repo-name/tree/master/source/_posts/_posts/Docker%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97.md" class="post-edit-link" title="编辑" rel="noopener" target="_blank"><i class="fa fa-pencil-alt"></i></a>
+          K8S创建SA用户<a href="https://github.com/user-name/repo-name/tree/master/source/_posts/_posts/K8S%E5%88%9B%E5%BB%BASA%E7%94%A8%E6%88%B7.md" class="post-edit-link" title="编辑" rel="noopener" target="_blank"><i class="fa fa-pencil-alt"></i></a>
         </h1>
 
         <div class="post-meta">
@@ -202,23 +194,17 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
+              
 
-              <time title="创建时间：2021-04-08 16:16:18" itemprop="dateCreated datePublished" datetime="2021-04-08T16:16:18+08:00">2021-04-08</time>
+              <time title="创建时间：2021-05-14 11:09:04 / 修改时间：14:44:59" itemprop="dateCreated datePublished" datetime="2021-05-14T11:09:04+08:00">2021-05-14</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-04-15 12:33:35" itemprop="dateModified" datetime="2021-04-15T12:33:35+08:00">2021-04-15</time>
-              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Docker/" itemprop="url" rel="index"><span itemprop="name">Docker</span></a>
+                  <a href="/categories/K8S/" itemprop="url" rel="index"><span itemprop="name">K8S</span></a>
                 </span>
             </span>
 
@@ -233,50 +219,28 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h1 id="Docker-操作指北"><a href="#Docker-操作指北" class="headerlink" title="Docker 操作指北"></a>Docker 操作指北</h1><span id="more"></span>
-<h3 id="镜像操作"><a href="#镜像操作" class="headerlink" title="镜像操作"></a>镜像操作</h3><ul>
-<li><p>获取镜像</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker pull [选项] [Docker Registry 地址[:端口号]&#x2F;]仓库名[:标签]</span><br><span class="line">示例</span><br><span class="line">docker pull ubuntu:18.04</span><br></pre></td></tr></table></figure></li>
-<li><p>以该镜像作为基础启动，运行容器</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker run [OPTIONS] IMAGE [COMMAND] [ARG...]</span><br><span class="line">示例</span><br><span class="line">docker run --name -it ubuntu:18.04</span><br></pre></td></tr></table></figure>
-<p><img src="16080008810914.jpg" alt="-w793"></p>
-</li>
-</ul>
-<ul>
-<li>查看镜像</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker images</span><br><span class="line">示例</span><br><span class="line">docker image ls -a</span><br></pre></td></tr></table></figure>
-<p><img src="16080007788786.jpg" alt="-w671"></p>
-<ul>
-<li>删除镜像</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">docker image rm [选项] &lt;镜像1&gt; [&lt;镜像2&gt; ...]</span><br><span class="line">示例</span><br><span class="line">docker image rm ubuntu:v2</span><br><span class="line">注：在删除镜像之前，要删除使用该镜像启动的容器，如下图</span><br></pre></td></tr></table></figure>
-<p><img src="16080011490036.jpg" alt="-w1100"></p>
-<ul>
-<li>使用Dockerfile定制镜像</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker build [选项] &lt;上下文路径&#x2F;URL&#x2F;-&gt;</span><br><span class="line">示例</span><br><span class="line">docker build -t ubuntu:v2 .</span><br></pre></td></tr></table></figure>
-<p>详细说明<a target="_blank" rel="noopener" href="https://yeasy.gitbook.io/docker_practice/image/build">https://yeasy.gitbook.io/docker_practice/image/build</a><br>命令详解<a target="_blank" rel="noopener" href="https://www.runoob.com/docker/docker-image-usage.html">https://www.runoob.com/docker/docker-image-usage.html</a></p>
-<h3 id="容器操作"><a href="#容器操作" class="headerlink" title="容器操作"></a>容器操作</h3><ul>
-<li>新建并启动容器</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker run</span><br><span class="line">示例</span><br><span class="line">docker run ubuntu:18.04 &#x2F;bin&#x2F;echo &#39;Hello world&#39;</span><br></pre></td></tr></table></figure>
-<p><img src="16080021017784.jpg" alt="-w853"></p>
-<ul>
-<li><p>查看容器</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker ps [OPTIONS]</span><br><span class="line">示例</span><br><span class="line">docker ps -a</span><br></pre></td></tr></table></figure>
-<p><img src="16080022845311.jpg" alt="-w1100"></p>
-</li>
-<li><p>容器生命周期管理</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">docker start [OPTIONS] CONTAINER [CONTAINER...]</span><br><span class="line">docker stop [OPTIONS] CONTAINER [CONTAINER...]</span><br><span class="line">docker restart [OPTIONS] CONTAINER [CONTAINER...]</span><br><span class="line">示例</span><br><span class="line">docker start hello-world</span><br></pre></td></tr></table></figure>
-<p><img src="16080023732830.jpg" alt="-w1090"></p>
-</li>
-<li><p>删除容器</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker rm [OPTIONS] CONTAINER [CONTAINER...]</span><br><span class="line">示例</span><br><span class="line">docker rm id</span><br></pre></td></tr></table></figure>
-<p><img src="16080025060949.jpg" alt="-w1528"></p>
-</li>
-</ul>
-<p>命令详解<a target="_blank" rel="noopener" href="https://www.runoob.com/docker/docker-command-manual.html">https://www.runoob.com/docker/docker-command-manual.html</a></p>
+        <p>有个测试的K8S集群，自己可以随便玩，想着给自己创建一个账号，并且赋予特定权限，也算是记录一下。这里创建的是Service Accounts账号，Service Accounts的含义后续再写。</p>
+<span id="more"></span>
+<h1 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h1><p>创建账号首先要明确这个账号的使用目的是什么，需要拥有那个命名空间的权限，需要命名空间中的那些权限，那么这里，我们就先创建一个名字是wzzz的SA账号，需要拥有wzzz命名空间下的全部权限。OK，接下来开始操作。</p>
+<h1 id="创建账号"><a href="#创建账号" class="headerlink" title="创建账号"></a>创建账号</h1><p>这里统一在default命名空间下创建新的SA账号，然后再将其他命名空间的权限赋予该账号，便于管理，所有SA账号都可以在default命名空间下查询到。<br>首先创建一个SA账号</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl create sa wzzz</span><br></pre></td></tr></table></figure>
+<p>然后查看default命名空间下是否有这个账户</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get sa | grep wzzz</span><br></pre></td></tr></table></figure>
+<h1 id="创建Role对象"><a href="#创建Role对象" class="headerlink" title="创建Role对象"></a>创建Role对象</h1><p>这里是针对wzzz命名空间创建一个Role对象，使得这个对象拥有权限，下面的yaml文件提供了该命名空间的全部权限，包括创建、删除、更新、查看日志等全部权限，如果想要跟更改可以在rules里写自己想要的权限。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: rbac.authorization.k8s.io&#x2F;v1</span><br><span class="line">kind: Role</span><br><span class="line">metadata:</span><br><span class="line">  name: wzzz-sa-role</span><br><span class="line">  namespace: wzzz</span><br><span class="line">rules:</span><br><span class="line">- apiGroups: [&quot;*&quot;]</span><br><span class="line">  resources: [&quot;*&quot;]</span><br><span class="line">  verbs: [&quot;*&quot;]</span><br></pre></td></tr></table></figure>
+<p>创建该role对象</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl create -f wzzz-sa-role.yaml</span><br></pre></td></tr></table></figure>
+<h1 id="创建Rolebinding对象"><a href="#创建Rolebinding对象" class="headerlink" title="创建Rolebinding对象"></a>创建Rolebinding对象</h1><p>上面已经有了一个role对象，现在将role对象和用户绑定起来</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: rbac.authorization.k8s.io&#x2F;v1</span><br><span class="line">kind: RoleBinding</span><br><span class="line">metadata:</span><br><span class="line">  name: wzzz-sa-wzzz-all</span><br><span class="line">  namespace: wzzz</span><br><span class="line">subjects:</span><br><span class="line">- kind: ServiceAccount</span><br><span class="line">  name: wzzz</span><br><span class="line">  namespace: default</span><br><span class="line">roleRef:</span><br><span class="line">  kind: Role</span><br><span class="line">  name: wzzz-sa-role</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br></pre></td></tr></table></figure>
+<p>添加这个资源对象</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl create -f wzzz-sa-rolebinding.yaml</span><br></pre></td></tr></table></figure>
+<p>到此这个wzzz用户已经创建好并且拥有了wzzz命名空间下的全部权限，能够创建、更新、删除、查看pod及service等功能。</p>
+<h1 id="验证账号"><a href="#验证账号" class="headerlink" title="验证账号"></a>验证账号</h1><p>账号已经创建好了，接下来要在dashboard上查看这个账号是否能够使用，那么接下来生成wzzz的token，用来登陆dashboard。<br>首先获取wzzz账号的secret</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">asuperliar@asuperliardeMacBook-Pro ~ % kubectl get secret | grep wzzz</span><br><span class="line">wzzz-token-q6vnn              kubernetes.io&#x2F;service-account-token   3      3d</span><br></pre></td></tr></table></figure>
+
+<p>然后根据这个secret获取对应的token。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get secret wzzz-token-q6vnn -o jsonpath&#x3D;&#123;.data.token&#125; -n kube-system |base64 -d</span><br></pre></td></tr></table></figure>
+<p>这里会生成一个很长的token，通过这个token就可以登陆dashbord了。</p>
 
     </div>
 
@@ -286,7 +250,7 @@
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0/" rel="tag"><i class="fa fa-tasks"></i> 基础学习</a>
+              <a href="/tags/K8S%E5%9F%BA%E7%A1%80/" rel="tag"><i class="fa fa-tasks"></i> K8S基础</a>
           </div>
 
         
@@ -294,11 +258,11 @@
 
         
     <div class="post-nav">
-      <div class="post-nav-item"></div>
       <div class="post-nav-item">
-    <a href="/2021/04/15/Prometheus%E5%86%85%E5%AD%98%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/" rel="next" title="Prometheus内存性能测试">
-      Prometheus内存性能测试 <i class="fa fa-chevron-right"></i>
+    <a href="/2021/04/15/Prometheus%E5%86%85%E5%AD%98%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/" rel="prev" title="Prometheus内存性能测试">
+      <i class="fa fa-chevron-left"></i> Prometheus内存性能测试
     </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -357,7 +321,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker-%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8C%97"><span class="nav-number">1.</span> <span class="nav-text">Docker 操作指北</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%95%9C%E5%83%8F%E6%93%8D%E4%BD%9C"><span class="nav-number">1.0.1.</span> <span class="nav-text">镜像操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%B9%E5%99%A8%E6%93%8D%E4%BD%9C"><span class="nav-number">1.0.2.</span> <span class="nav-text">容器操作</span></a></li></ol></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="nav-number">1.</span> <span class="nav-text">准备工作</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E8%B4%A6%E5%8F%B7"><span class="nav-number">2.</span> <span class="nav-text">创建账号</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%9B%E5%BB%BARole%E5%AF%B9%E8%B1%A1"><span class="nav-number">3.</span> <span class="nav-text">创建Role对象</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%9B%E5%BB%BARolebinding%E5%AF%B9%E8%B1%A1"><span class="nav-number">4.</span> <span class="nav-text">创建Rolebinding对象</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%AA%8C%E8%AF%81%E8%B4%A6%E5%8F%B7"><span class="nav-number">5.</span> <span class="nav-text">验证账号</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
