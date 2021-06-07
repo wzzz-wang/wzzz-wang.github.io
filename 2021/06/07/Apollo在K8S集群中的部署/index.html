@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"wzzz-wang.github.io","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="前言目前线上环境是缺少一套统一的配置中心，所以搜索了一下开源的配置中心组件，发现携程团队开发的Apollo配置中心，文档详细，功能完全，所以在线下K8S集群搭建一套多环境多实例的Apollo用来测试。虽然Apollo的项目里说的清楚明白，但是在实际搭建中还是遇到了不少问题，这里主要需要注意的点就是Apollo的镜像制作，各个服务的配置更改，还有服务的启动顺序。具体的可以查看Apollo的官网htt">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Apollo在K8S集群中的部署">
+<meta property="og:url" content="http://wzzz-wang.github.io/2021/06/07/Apollo%E5%9C%A8K8S%E9%9B%86%E7%BE%A4%E4%B8%AD%E7%9A%84%E9%83%A8%E7%BD%B2/index.html">
+<meta property="og:site_name" content="Wzzz">
+<meta property="og:description" content="前言目前线上环境是缺少一套统一的配置中心，所以搜索了一下开源的配置中心组件，发现携程团队开发的Apollo配置中心，文档详细，功能完全，所以在线下K8S集群搭建一套多环境多实例的Apollo用来测试。虽然Apollo的项目里说的清楚明白，但是在实际搭建中还是遇到了不少问题，这里主要需要注意的点就是Apollo的镜像制作，各个服务的配置更改，还有服务的启动顺序。具体的可以查看Apollo的官网htt">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://wzzz-wang.github.io/2021/06/07/Apollo%E5%9C%A8K8S%E9%9B%86%E7%BE%A4%E4%B8%AD%E7%9A%84%E9%83%A8%E7%BD%B2/%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84.jpg">
+<meta property="article:published_time" content="2021-06-07T08:26:15.000Z">
+<meta property="article:modified_time" content="2021-06-07T11:20:26.814Z">
+<meta property="article:author" content="Wzzz">
+<meta property="article:tag" content="开源组件">
+<meta property="article:tag" content="服务搭建">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://wzzz-wang.github.io/2021/06/07/Apollo%E5%9C%A8K8S%E9%9B%86%E7%BE%A4%E4%B8%AD%E7%9A%84%E9%83%A8%E7%BD%B2/%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84.jpg">
+
+<link rel="canonical" href="http://wzzz-wang.github.io/2021/06/07/Apollo%E5%9C%A8K8S%E9%9B%86%E7%BE%A4%E4%B8%AD%E7%9A%84%E9%83%A8%E7%BD%B2/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Apollo在K8S集群中的部署 | Wzzz</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Wzzz</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Staying Focused</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://wzzz-wang.github.io/2021/06/07/Apollo%E5%9C%A8K8S%E9%9B%86%E7%BE%A4%E4%B8%AD%E7%9A%84%E9%83%A8%E7%BD%B2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/dog.jpeg">
+      <meta itemprop="name" content="Wzzz">
+      <meta itemprop="description" content="努力努力再努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Wzzz">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Apollo在K8S集群中的部署<a href="https://github.com/user-name/repo-name/tree/master/source/_posts/_posts/Apollo%E5%9C%A8K8S%E9%9B%86%E7%BE%A4%E4%B8%AD%E7%9A%84%E9%83%A8%E7%BD%B2.md" class="post-edit-link" title="编辑" rel="noopener" target="_blank"><i class="fa fa-pencil-alt"></i></a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-06-07 16:26:15 / 修改时间：19:20:26" itemprop="dateCreated datePublished" datetime="2021-06-07T16:26:15+08:00">2021-06-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Apollo/" itemprop="url" rel="index"><span itemprop="name">Apollo</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Apollo/K8S/" itemprop="url" rel="index"><span itemprop="name">K8S</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>目前线上环境是缺少一套统一的配置中心，所以搜索了一下开源的配置中心组件，发现携程团队开发的Apollo配置中心，文档详细，功能完全，所以在线下K8S集群搭建一套多环境多实例的Apollo用来测试。虽然Apollo的项目里说的清楚明白，但是在实际搭建中还是遇到了不少问题，这里主要需要注意的点就是Apollo的镜像制作，各个服务的配置更改，还有服务的启动顺序。具体的可以查看Apollo的官网<a target="_blank" rel="noopener" href="https://www.apolloconfig.com/#/zh/README">https://www.apolloconfig.com/#/zh/README</a></p>
+<span id="more"></span>
+
+<h1 id="部署流程"><a href="#部署流程" class="headerlink" title="部署流程"></a>部署流程</h1><h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><h4 id="所需环境及依赖"><a href="#所需环境及依赖" class="headerlink" title="所需环境及依赖"></a>所需环境及依赖</h4><ul>
+<li>K8S集群 1.15+</li>
+<li>Mysql 5.6.5+</li>
+<li>Apollo 1.8.2</li>
+</ul>
+<h4 id="1、制作镜像"><a href="#1、制作镜像" class="headerlink" title="1、制作镜像"></a>1、制作镜像</h4><p>首先从官网下载项目包，解压后的项目包如下<br><img src="%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84.jpg" alt="项目结构"><br>主要使用到apollo-portal、apollo-adminservice、apollo-configservice这三个项目，他们的主要功能分别是</p>
+<ul>
+<li>apollo-portal</li>
+</ul>
+<ol>
+<li>配置管理界面</li>
+<li>通过MetaServer获取AdminService的服务列表</li>
+<li>使用客户端软负载SLB方式调用AdminService</li>
+</ol>
+<ul>
+<li>apollo-adminservice</li>
+</ul>
+<ol>
+<li>提供配置管理接口</li>
+<li>提供配置修改发布接口</li>
+<li>服务于管理界面Portal </li>
+</ol>
+<ul>
+<li>apollo-configservice</li>
+</ul>
+<ol>
+<li>提供配置获取接口</li>
+<li>提供配置推送接口</li>
+<li>服务于Apollo客户端</li>
+</ol>
+<ul>
+<li>准备好apollo-portal.jar，放到 scripts/apollo-on-kubernetes/apollo-portal-server</li>
+<li>准备好apollo-adminservice.jar，放到 scripts/apollo-on-kubernetes/apollo-admin-server</li>
+<li>准备好apollo-configservice.jar，放到 scripts/apollo-on-kubernetes/apollo-config-server</li>
+</ul>
+<p>我们需要分别为alpine-bash-3.8-image，apollo-config-server，apollo-admin-server和apollo-portal-server构建镜像，可以直接使用对应目录下的Dockerfile。<br><code>注意主要修改Dockerfile中的环境变量</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在 scripts/apollo-on-kubernetes/apollo-config-server 路径下</span></span><br><span class="line">docker build -t apollo-config-server:v1.8.2 .</span><br><span class="line"></span><br><span class="line"><span class="comment"># 在 scripts/apollo-on-kubernetes/apollo-admin-server 路径下</span></span><br><span class="line">docker build -t apollo-admin-server:v1.8.2 .</span><br><span class="line"></span><br><span class="line"><span class="comment"># 在 scripts/apollo-on-kubernetes/apollo-portal-server 路径下</span></span><br><span class="line">docker build -t apollo-portal-server:v1.8.2 .</span><br><span class="line"></span><br><span class="line"><span class="comment"># 在 scripts/apollo-on-kubernetes/alpine-bash-3.8-image 路径下</span></span><br><span class="line">docker build -t alpine-bash:3.8 .</span><br></pre></td></tr></table></figure>
+<p>然后修改tag及仓库地址，上传到指定的harbor仓库，这里就不再详细说明了</p>
+<h4 id="2-创建数据库环境"><a href="#2-创建数据库环境" class="headerlink" title="2 创建数据库环境"></a>2 创建数据库环境</h4><p>此次部署的是多环境多实例的Apollo，每一个环境都需要一个ConfigDB数据库，所以，在此之前要规划好需要几个环境，这一次我们搭建三个环境的Apollo，分别是DEV、PRO、FAT这三个环境，所以需要三个ConfigDB数据库还有一个portalDB数据库，这些数据库可以使用同一个Mysql服务，但是要做好名字区分，并且在congifmap中做好配置，后面会详细说明。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">使用scripts&#x2F;apollo-on-kubernetes&#x2F;db&#x2F;config-db-dev&#x2F;apolloconfigdb.sql创建dev环境的ApolloConfigDB数据库及表格</span><br><span class="line"></span><br><span class="line">使用scripts&#x2F;apollo-on-kubernetes&#x2F;db&#x2F;config-db-prod&#x2F;apolloconfigdb.sql创建pro环境的ApolloConfigDB数据库及表格</span><br><span class="line"></span><br><span class="line">使用scripts&#x2F;apollo-on-kubernetes&#x2F;db&#x2F;config-db-test-alpha&#x2F;apolloconfigdb.sql创建fat环境的ApolloConfigDB数据库及表格</span><br><span class="line"></span><br><span class="line">使用scripts&#x2F;apollo-on-kubernetes&#x2F;db&#x2F;portal-db&#x2F;apolloportaldb.sql创建portal的ApolloPortalDB数据库及表格</span><br></pre></td></tr></table></figure>
+<p>到此数据库环境准备完毕，共有四个数据库，三个环境congifDB数据库和一个portal数据库。</p>
+<h4 id="3-在K8S集群中部署"><a href="#3-在K8S集群中部署" class="headerlink" title="3 在K8S集群中部署"></a>3 在K8S集群中部署</h4><p>在Apollo项目中已经提供了对应的部署文件，但是需要修改的地方也有很多，最后会贴出全部的配置文件，这里只是对yaml文件中修改的部分做出说明，三个环境的部署文件修改的地方相同，portal的部署文件修改的地方略有不同，下面会做出分别说明。</p>
+<p>其中，我单独创建了wzzz-test命名空间，在wzzz-test命名空间下部署Apollo，数据库我已经自己在K8S中部署，不需要在K8S中为外部数据库创建对应service，所以项目中的service-mysql-for-apollo-dev-env.yaml不需要执行，可直接使用mysql的服务名作为链接。此为部署前提。</p>
+<ul>
+<li>service-apollo-admin-service.yaml</li>
+</ul>
+<ol>
+<li>ConfigMap需修改数据库相关信息，具体字段为<code>spring.datasource.url</code>、<code>spring.datasource.username</code>、<code>spring.datasource.password</code></li>
+<li>Deployment需修改initContainers镜像，initContainers中command，containers镜像，env环境变量APOLLO_ADMIN_SERVICE_NAME对应value</li>
+</ol>
+<ul>
+<li>service-apollo-config-service.yaml</li>
+</ul>
+<ol>
+<li>ConfigMap需修改数据库相关信息，具体字段为<code>spring.datasource.url</code>、<code>spring.datasource.username</code>、<code>spring.datasource.password</code>。</li>
+<li>Deployment需修改initContainers镜像，initContainers中command，containers镜像，env环境变量APOLLO_ADMIN_SERVICE_NAME对应value。</li>
+</ol>
+<ul>
+<li>service-apollo-portal-service.yaml</li>
+</ul>
+<ol>
+<li>ConfigMap需修改数据库相关信息，具体字段为<code>spring.datasource.url</code>、<code>spring.datasource.username</code>、<code>spring.datasource.password</code>，环境变量配置，具体字段为<code>dev.meta</code>、<code>fat.meta</code>、<code>pro.meta</code>。</li>
+<li>Deployment需修改initContainers镜像，initContainers中command，此处需注意，搭建了几个环境就要写入对应的环境命令，如果多写了环境则会启动失败，如果少写了环境，则启动后环境缺失。containers镜像，env环境变量APOLLO_ADMIN_SERVICE_NAME对应value。</li>
+</ol>
+<p>文件修改完毕后即可对应执行部署命令。<br>注意，每个环境的admin和config必须要按照以下顺序启动，环境顺序可以更改，但是admin和config启动顺序不可以更改，也可以参照scripts/apollo-on-kubernetes/kubernetes/kubectl-apply.sh脚本启动。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">启动dev环境</span><br><span class="line">kubectl apply -f apollo-env-dev&#x2F;service-apollo-config-server-dev.yaml --record </span><br><span class="line">kubectl apply -f apollo-env-dev&#x2F;service-apollo-admin-server-dev.yaml --record</span><br><span class="line"></span><br><span class="line">启动fat环境</span><br><span class="line">kubectl apply -f apollo-env-test-alpha&#x2F;service-apollo-config-server-test-alpha.yaml --record </span><br><span class="line">kubectl apply -f apollo-env-test-alpha&#x2F;service-apollo-admin-server-test-alpha.yaml --record</span><br><span class="line"></span><br><span class="line">启动pro环境</span><br><span class="line">kubectl apply -f apollo-env-prod&#x2F;service-apollo-config-server-prod.yaml --record &amp;&amp; \</span><br><span class="line">kubectl apply -f apollo-env-prod&#x2F;service-apollo-admin-server-prod.yaml --record</span><br><span class="line"></span><br><span class="line">启动portal</span><br><span class="line">kubectl apply -f service-apollo-portal-server.yaml --record</span><br></pre></td></tr></table></figure>
+<p>如果先启动了admin，后启动了config，则读取不到该环境，因为在Eureka中，该服务处于out-stand状态，所以该环境不可用，在页面上也无法配置。</p>
+<p>至此Apollo已经部署成功，其中三个环境分别是DEV，FAT，PRO。</p>
+<h4 id="4-部署文件"><a href="#4-部署文件" class="headerlink" title="4 部署文件"></a>4 部署文件</h4><p>service-apollo-admin-server.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br></pre></td><td class="code"><pre><span class="line">#</span><br><span class="line"># Copyright 2021 Apollo Authors</span><br><span class="line">#</span><br><span class="line"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span><br><span class="line"># you may not use this file except in compliance with the License.</span><br><span class="line"># You may obtain a copy of the License at</span><br><span class="line">#</span><br><span class="line"># http:&#x2F;&#x2F;www.apache.org&#x2F;licenses&#x2F;LICENSE-2.0</span><br><span class="line">#</span><br><span class="line"># Unless required by applicable law or agreed to in writing, software</span><br><span class="line"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span><br><span class="line"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span><br><span class="line"># See the License for the specific language governing permissions and</span><br><span class="line"># limitations under the License.</span><br><span class="line">#</span><br><span class="line">---</span><br><span class="line"># configmap for apollo-admin-server-dev</span><br><span class="line">kind: ConfigMap</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  namespace: wzzz-test</span><br><span class="line">  name: configmap-apollo-admin-server-dev</span><br><span class="line">data:</span><br><span class="line">  application-github.properties: |</span><br><span class="line">    spring.datasource.url &#x3D; jdbc:mysql:&#x2F;&#x2F;mysql.wzzz-test:3306&#x2F;DevApolloConfigDB?characterEncoding&#x3D;utf8</span><br><span class="line">    spring.datasource.username &#x3D; root</span><br><span class="line">    spring.datasource.password &#x3D; password</span><br><span class="line">    eureka.service.url &#x3D; http:&#x2F;&#x2F;statefulset-apollo-config-server-dev-0.service-apollo-meta-server-dev:8080&#x2F;eureka&#x2F;,http:&#x2F;&#x2F;statefulset-apollo-config-server-dev-1.service-apollo-meta-server-dev:8080&#x2F;eureka&#x2F;,http:&#x2F;&#x2F;statefulset-apollo-config-server-dev-2.service-apollo-meta-server-dev:8080&#x2F;eureka&#x2F;</span><br><span class="line"></span><br><span class="line">---</span><br><span class="line">kind: Service</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  namespace: wzzz-test</span><br><span class="line">  name: service-apollo-admin-server-dev</span><br><span class="line">  labels:</span><br><span class="line">    app: service-apollo-admin-server-dev</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">    - protocol: TCP</span><br><span class="line">      port: 8090</span><br><span class="line">      targetPort: 8090</span><br><span class="line">  selector:</span><br><span class="line">    app: pod-apollo-admin-server-dev</span><br><span class="line">  type: ClusterIP</span><br><span class="line">  sessionAffinity: ClientIP</span><br><span class="line"></span><br><span class="line">---</span><br><span class="line">kind: Deployment</span><br><span class="line">apiVersion: apps&#x2F;v1</span><br><span class="line">metadata:</span><br><span class="line">  namespace: wzzz-test</span><br><span class="line">  name: deployment-apollo-admin-server-dev</span><br><span class="line">  labels:</span><br><span class="line">    app: deployment-apollo-admin-server-dev</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: pod-apollo-admin-server-dev</span><br><span class="line">  strategy:</span><br><span class="line">    rollingUpdate:</span><br><span class="line">      maxSurge: 1</span><br><span class="line">      maxUnavailable: 1</span><br><span class="line">    type: RollingUpdate</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: pod-apollo-admin-server-dev</span><br><span class="line">    spec:</span><br><span class="line">      affinity:</span><br><span class="line">        podAntiAffinity:</span><br><span class="line">          preferredDuringSchedulingIgnoredDuringExecution:</span><br><span class="line">          - weight: 100</span><br><span class="line">            podAffinityTerm:</span><br><span class="line">              labelSelector:</span><br><span class="line">                matchExpressions:</span><br><span class="line">                - key: app</span><br><span class="line">                  operator: In</span><br><span class="line">                  values:</span><br><span class="line">                  - pod-apollo-admin-server-dev</span><br><span class="line">              topologyKey: kubernetes.io&#x2F;hostname</span><br><span class="line">      </span><br><span class="line">      volumes:</span><br><span class="line">        - name: volume-configmap-apollo-admin-server-dev</span><br><span class="line">          configMap:</span><br><span class="line">            name: configmap-apollo-admin-server-dev</span><br><span class="line">            items:</span><br><span class="line">              - key: application-github.properties</span><br><span class="line">                path: application-github.properties</span><br><span class="line">      </span><br><span class="line">      initContainers:</span><br><span class="line">        - image: harbor.k8s-test.uc.host.wzzz&#x2F;wzzz&#x2F;alpine-bash:3.8</span><br><span class="line">          name: check-service-apollo-config-server-dev</span><br><span class="line">          command: [&#39;bash&#39;, &#39;-c&#39;, &quot;curl --connect-timeout 2 --max-time 5 --retry 60 --retry-delay 1 --retry-max-time 120 service-apollo-config-server-dev.wzzz-test:8080&quot;]</span><br><span class="line">      </span><br><span class="line">      containers:</span><br><span class="line">        - image: harbor.k8s-test.uc.host.wzzz&#x2F;wzzz&#x2F;apollo-admin-server:v1.8.2</span><br><span class="line">          securityContext:</span><br><span class="line">            privileged: true</span><br><span class="line">          imagePullPolicy: IfNotPresent</span><br><span class="line">          name: container-apollo-admin-server-dev</span><br><span class="line">          ports:</span><br><span class="line">            - protocol: TCP</span><br><span class="line">              containerPort: 8090</span><br><span class="line">          </span><br><span class="line">          volumeMounts:</span><br><span class="line">            - name: volume-configmap-apollo-admin-server-dev</span><br><span class="line">              mountPath: &#x2F;apollo-admin-server&#x2F;config&#x2F;application-github.properties</span><br><span class="line">              subPath: application-github.properties</span><br><span class="line">          </span><br><span class="line">          env:</span><br><span class="line">            - name: APOLLO_ADMIN_SERVICE_NAME</span><br><span class="line">              value: &quot;service-apollo-admin-server-dev.wzzz-test&quot;</span><br><span class="line">          </span><br><span class="line">          readinessProbe:</span><br><span class="line">            tcpSocket:</span><br><span class="line">              port: 8090</span><br><span class="line">            initialDelaySeconds: 10</span><br><span class="line">            periodSeconds: 5</span><br><span class="line">          </span><br><span class="line">          livenessProbe:</span><br><span class="line">            tcpSocket:</span><br><span class="line">              port: 8090</span><br><span class="line">            initialDelaySeconds: 120</span><br><span class="line">            periodSeconds: 10</span><br><span class="line">          </span><br><span class="line">      dnsPolicy: ClusterFirst</span><br><span class="line">      restartPolicy: Always</span><br></pre></td></tr></table></figure>
+
+<p>service-apollo-config-server.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br></pre></td><td class="code"><pre><span class="line">#</span><br><span class="line"># Copyright 2021 Apollo Authors</span><br><span class="line">#</span><br><span class="line"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span><br><span class="line"># you may not use this file except in compliance with the License.</span><br><span class="line"># You may obtain a copy of the License at</span><br><span class="line">#</span><br><span class="line"># http:&#x2F;&#x2F;www.apache.org&#x2F;licenses&#x2F;LICENSE-2.0</span><br><span class="line">#</span><br><span class="line"># Unless required by applicable law or agreed to in writing, software</span><br><span class="line"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span><br><span class="line"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span><br><span class="line"># See the License for the specific language governing permissions and</span><br><span class="line"># limitations under the License.</span><br><span class="line">#</span><br><span class="line">---</span><br><span class="line"># configmap for apollo-config-server-dev</span><br><span class="line">kind: ConfigMap</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  namespace: wzzz-test</span><br><span class="line">  name: configmap-apollo-config-server-dev</span><br><span class="line">data:</span><br><span class="line">  application-github.properties: |</span><br><span class="line">    spring.datasource.url &#x3D; jdbc:mysql:&#x2F;&#x2F;mysql.wzzz-test:3306&#x2F;DevApolloConfigDB?characterEncoding&#x3D;utf8</span><br><span class="line">    spring.datasource.username &#x3D; root</span><br><span class="line">    spring.datasource.password &#x3D; password</span><br><span class="line">    eureka.service.url &#x3D; http:&#x2F;&#x2F;statefulset-apollo-config-server-dev-0.service-apollo-meta-server-dev:8080&#x2F;eureka&#x2F;,http:&#x2F;&#x2F;statefulset-apollo-config-server-dev-1.service-apollo-meta-server-dev:8080&#x2F;eureka&#x2F;,http:&#x2F;&#x2F;statefulset-apollo-config-server-dev-2.service-apollo-meta-server-dev:8080&#x2F;eureka&#x2F;</span><br><span class="line"></span><br><span class="line">---</span><br><span class="line">kind: Service</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  namespace: wzzz-test</span><br><span class="line">  name: service-apollo-meta-server-dev</span><br><span class="line">  labels:</span><br><span class="line">    app: service-apollo-meta-server-dev</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">    - protocol: TCP</span><br><span class="line">      port: 8080</span><br><span class="line">      targetPort: 8080</span><br><span class="line">  selector:</span><br><span class="line">    app: pod-apollo-config-server-dev</span><br><span class="line">  type: ClusterIP</span><br><span class="line">  clusterIP: None</span><br><span class="line">  sessionAffinity: ClientIP</span><br><span class="line"></span><br><span class="line">---</span><br><span class="line">kind: Service</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  namespace: wzzz-test</span><br><span class="line">  name: service-apollo-config-server-dev</span><br><span class="line">  labels:</span><br><span class="line">    app: service-apollo-config-server-dev</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">    - protocol: TCP</span><br><span class="line">      port: 8080</span><br><span class="line">      targetPort: 8080</span><br><span class="line">      nodePort: 30002</span><br><span class="line">  selector:</span><br><span class="line">    app: pod-apollo-config-server-dev </span><br><span class="line">  type: NodePort</span><br><span class="line">  sessionAffinity: ClientIP</span><br><span class="line"></span><br><span class="line">---</span><br><span class="line">kind: StatefulSet</span><br><span class="line">apiVersion: apps&#x2F;v1</span><br><span class="line">metadata:</span><br><span class="line">  namespace: wzzz-test</span><br><span class="line">  name: statefulset-apollo-config-server-dev</span><br><span class="line">  labels:</span><br><span class="line">    app: statefulset-apollo-config-server-dev</span><br><span class="line">spec:</span><br><span class="line">  serviceName: service-apollo-meta-server-dev</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: pod-apollo-config-server-dev</span><br><span class="line">  updateStrategy:</span><br><span class="line">    type: RollingUpdate</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: pod-apollo-config-server-dev</span><br><span class="line">    spec:</span><br><span class="line">      affinity:</span><br><span class="line">        podAntiAffinity:</span><br><span class="line">          preferredDuringSchedulingIgnoredDuringExecution:</span><br><span class="line">          - weight: 100</span><br><span class="line">            podAffinityTerm:</span><br><span class="line">              labelSelector:</span><br><span class="line">                matchExpressions:</span><br><span class="line">                - key: app</span><br><span class="line">                  operator: In</span><br><span class="line">                  values:</span><br><span class="line">                  - pod-apollo-config-server-dev</span><br><span class="line">              topologyKey: kubernetes.io&#x2F;hostname</span><br><span class="line"></span><br><span class="line">      volumes:</span><br><span class="line">        - name: volume-configmap-apollo-config-server-dev</span><br><span class="line">          configMap:</span><br><span class="line">            name: configmap-apollo-config-server-dev</span><br><span class="line">            items:</span><br><span class="line">              - key: application-github.properties</span><br><span class="line">                path: application-github.properties</span><br><span class="line">      </span><br><span class="line">      containers:</span><br><span class="line">        - image: harbor.k8s-test.uc.host.wzzz&#x2F;wzzz&#x2F;apollo-config-server:v1.8.2</span><br><span class="line">          securityContext:</span><br><span class="line">            privileged: true</span><br><span class="line">          imagePullPolicy: IfNotPresent</span><br><span class="line">          name: container-apollo-config-server-dev</span><br><span class="line">          ports:</span><br><span class="line">            - protocol: TCP</span><br><span class="line">              containerPort: 8080</span><br><span class="line">          </span><br><span class="line">          volumeMounts:</span><br><span class="line">            - name: volume-configmap-apollo-config-server-dev</span><br><span class="line">              mountPath: &#x2F;apollo-config-server&#x2F;config&#x2F;application-github.properties</span><br><span class="line">              subPath: application-github.properties</span><br><span class="line">          </span><br><span class="line">          env:</span><br><span class="line">            - name: APOLLO_CONFIG_SERVICE_NAME</span><br><span class="line">              value: &quot;service-apollo-config-server-dev.wzzz-test&quot;</span><br><span class="line">          </span><br><span class="line">          readinessProbe:</span><br><span class="line">            tcpSocket:</span><br><span class="line">              port: 8080</span><br><span class="line">            initialDelaySeconds: 10</span><br><span class="line">            periodSeconds: 5</span><br><span class="line">          </span><br><span class="line">          livenessProbe:</span><br><span class="line">            tcpSocket:</span><br><span class="line">              port: 8080</span><br><span class="line">            initialDelaySeconds:  120</span><br><span class="line">            periodSeconds: 10</span><br><span class="line">          </span><br><span class="line">      dnsPolicy: ClusterFirst</span><br><span class="line">      restartPolicy: Always</span><br></pre></td></tr></table></figure>
+
+<p>service-apollo-portal-server.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br></pre></td><td class="code"><pre><span class="line">#</span><br><span class="line"># Copyright 2021 Apollo Authors</span><br><span class="line">#</span><br><span class="line"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span><br><span class="line"># you may not use this file except in compliance with the License.</span><br><span class="line"># You may obtain a copy of the License at</span><br><span class="line">#</span><br><span class="line"># http:&#x2F;&#x2F;www.apache.org&#x2F;licenses&#x2F;LICENSE-2.0</span><br><span class="line">#</span><br><span class="line"># Unless required by applicable law or agreed to in writing, software</span><br><span class="line"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span><br><span class="line"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span><br><span class="line"># See the License for the specific language governing permissions and</span><br><span class="line"># limitations under the License.</span><br><span class="line">#</span><br><span class="line">---</span><br><span class="line"># 为外部 mysql 服务设置 service</span><br><span class="line">#kind: Service</span><br><span class="line">#apiVersion: v1</span><br><span class="line">#metadata:</span><br><span class="line">#  namespace: sre</span><br><span class="line">#  name: service-mysql-for-portal-server</span><br><span class="line">#  labels:</span><br><span class="line">#    app: service-mysql-for-portal-server</span><br><span class="line">#spec:</span><br><span class="line">#  ports:</span><br><span class="line">#    - protocol: TCP</span><br><span class="line">#      port: 3306</span><br><span class="line">#      targetPort: 3306</span><br><span class="line">#  type: ClusterIP</span><br><span class="line">#  sessionAffinity: None</span><br><span class="line">---</span><br><span class="line">#kind: Endpoints</span><br><span class="line">#apiVersion: v1</span><br><span class="line">#metadata:</span><br><span class="line">#  namespace: sre</span><br><span class="line">#  name: service-mysql-for-portal-server</span><br><span class="line">#subsets:</span><br><span class="line">#  - addresses:</span><br><span class="line">#      # 更改为你的 mysql addresses, 例如 1.1.1.1</span><br><span class="line">#      - ip: your-mysql-addresses</span><br><span class="line">#    ports:</span><br><span class="line">#      - protocol: TCP</span><br><span class="line">#        port: 3306</span><br><span class="line"></span><br><span class="line">---</span><br><span class="line"># configmap for apollo-portal-server</span><br><span class="line">kind: ConfigMap</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  namespace: wzzz-test</span><br><span class="line">  name: configmap-apollo-portal-server</span><br><span class="line">data:</span><br><span class="line">  application-github.properties: |</span><br><span class="line">    spring.datasource.url &#x3D; jdbc:mysql:&#x2F;&#x2F;mysql.wzzz-test:3306&#x2F;ApolloPortalDB?characterEncoding&#x3D;utf8</span><br><span class="line">    spring.datasource.username &#x3D; root</span><br><span class="line">    spring.datasource.password &#x3D; password</span><br><span class="line">  apollo-env.properties: |</span><br><span class="line">    dev.meta&#x3D;http:&#x2F;&#x2F;service-apollo-config-server-dev.wzzz-test:8080</span><br><span class="line">    fat.meta&#x3D;http:&#x2F;&#x2F;service-apollo-config-server-test-alpha.wzzz-test:8080</span><br><span class="line">    pro.meta&#x3D;http:&#x2F;&#x2F;service-apollo-config-server-prod.wzzz-test:8080</span><br><span class="line"></span><br><span class="line">---</span><br><span class="line">kind: Service</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  namespace: wzzz-test</span><br><span class="line">  name: service-apollo-portal-server</span><br><span class="line">  labels:</span><br><span class="line">    app: service-apollo-portal-server</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">    - protocol: TCP</span><br><span class="line">      port: 8070</span><br><span class="line">      targetPort: 8070</span><br><span class="line">      nodePort: 30006</span><br><span class="line">  selector:</span><br><span class="line">    app: pod-apollo-portal-server</span><br><span class="line">  type: NodePort</span><br><span class="line">  # portal session 保持</span><br><span class="line">  sessionAffinity: ClientIP</span><br><span class="line"></span><br><span class="line">---</span><br><span class="line">kind: Deployment</span><br><span class="line">apiVersion: apps&#x2F;v1</span><br><span class="line">metadata:</span><br><span class="line">  namespace: wzzz-test</span><br><span class="line">  name: deployment-apollo-portal-server</span><br><span class="line">  labels:</span><br><span class="line">    app: deployment-apollo-portal-server</span><br><span class="line">spec:</span><br><span class="line">  # 3 个实例</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: pod-apollo-portal-server</span><br><span class="line">  strategy:</span><br><span class="line">    rollingUpdate:</span><br><span class="line">      maxSurge: 1</span><br><span class="line">      maxUnavailable: 1</span><br><span class="line">    type: RollingUpdate</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: pod-apollo-portal-server</span><br><span class="line">    spec:</span><br><span class="line">#      affinity:</span><br><span class="line">#        podAntiAffinity:</span><br><span class="line">#          preferredDuringSchedulingIgnoredDuringExecution:</span><br><span class="line">#          - weight: 100</span><br><span class="line">#            podAffinityTerm:</span><br><span class="line">#              labelSelector:</span><br><span class="line">#                matchExpressions:</span><br><span class="line">#                - key: kubernetes.io&#x2F;cdh4</span><br><span class="line">#                  operator: In</span><br><span class="line">#                  values:</span><br><span class="line">#                  - pod-apollo-portal-server</span><br><span class="line">#              topologyKey: kubernetes.io&#x2F;hostname</span><br><span class="line"></span><br><span class="line">      nodeSelector:</span><br><span class="line">        kubernetes.io&#x2F;hostname: cdh4</span><br><span class="line">      volumes:</span><br><span class="line">        - name: volume-configmap-apollo-portal-server</span><br><span class="line">          configMap:</span><br><span class="line">            name: configmap-apollo-portal-server</span><br><span class="line">            items:</span><br><span class="line">              - key: application-github.properties</span><br><span class="line">                path: application-github.properties</span><br><span class="line">              - key: apollo-env.properties</span><br><span class="line">                path: apollo-env.properties</span><br><span class="line">      </span><br><span class="line">      initContainers:</span><br><span class="line">        # 确保 admin-service 正常提供服务</span><br><span class="line">        - image: harbor.k8s-test.uc.host.wzzz&#x2F;wzzz&#x2F;alpine-bash:3.8</span><br><span class="line">          name: check-service-apollo-admin-server-dev</span><br><span class="line">          command: [&#39;bash&#39;, &#39;-c&#39;, &quot;curl --connect-timeout 2 --max-time 5 --retry 60 --retry-delay 1 --retry-max-time 120 service-apollo-admin-server-dev.wzzz-test:8090&quot;]</span><br><span class="line">        - image: harbor.k8s-test.uc.host.wzzz&#x2F;wzzz&#x2F;alpine-bash:3.8</span><br><span class="line">          name: check-service-apollo-admin-server-alpha</span><br><span class="line">          command: [&#39;bash&#39;, &#39;-c&#39;, &quot;curl --connect-timeout 2 --max-time 5 --retry 60 --retry-delay 1 --retry-max-time 120 service-apollo-admin-server-test-alpha.wzzz-test:8090&quot;]</span><br><span class="line">        - image: harbor.k8s-test.uc.host.wzzz&#x2F;wzzz&#x2F;alpine-bash:3.8</span><br><span class="line">          name: check-service-apollo-admin-server-prod</span><br><span class="line">          command: [&#39;bash&#39;, &#39;-c&#39;, &quot;curl --connect-timeout 2 --max-time 5 --retry 60 --retry-delay 1 --retry-max-time 120 service-apollo-admin-server-prod.wzzz-test:8090&quot;]</span><br><span class="line"></span><br><span class="line">      containers:</span><br><span class="line">        - image: harbor.k8s-test.uc.host.wzzz&#x2F;wzzz&#x2F;apollo-portal-server:v1.8.2    # 更改为你的 docker registry 下的 image</span><br><span class="line">          securityContext:</span><br><span class="line">            privileged: true</span><br><span class="line">          imagePullPolicy: IfNotPresent</span><br><span class="line">          name: container-apollo-portal-server</span><br><span class="line">          ports:</span><br><span class="line">            - protocol: TCP</span><br><span class="line">              containerPort: 8070</span><br><span class="line"></span><br><span class="line">          volumeMounts:</span><br><span class="line">            - name: volume-configmap-apollo-portal-server</span><br><span class="line">              mountPath: &#x2F;apollo-portal-server&#x2F;config&#x2F;application-github.properties</span><br><span class="line">              subPath: application-github.properties</span><br><span class="line">            - name: volume-configmap-apollo-portal-server</span><br><span class="line">              mountPath: &#x2F;apollo-portal-server&#x2F;config&#x2F;apollo-env.properties</span><br><span class="line">              subPath: apollo-env.properties</span><br><span class="line"></span><br><span class="line">          env:</span><br><span class="line">            - name: APOLLO_PORTAL_SERVICE_NAME</span><br><span class="line">              value: &quot;service-apollo-portal-server.wzzz-test&quot;</span><br><span class="line"></span><br><span class="line">          readinessProbe:</span><br><span class="line">            tcpSocket:</span><br><span class="line">              port: 8070</span><br><span class="line">            initialDelaySeconds: 10</span><br><span class="line">            periodSeconds: 5</span><br><span class="line"></span><br><span class="line">          livenessProbe:</span><br><span class="line">            tcpSocket:</span><br><span class="line">              port: 8070</span><br><span class="line">            # 120s 内, server 未启动则重启 container</span><br><span class="line">            initialDelaySeconds: 120</span><br><span class="line">            periodSeconds: 15</span><br><span class="line"></span><br><span class="line">      dnsPolicy: ClusterFirst</span><br><span class="line">      restartPolicy: Always</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%BC%80%E6%BA%90%E7%BB%84%E4%BB%B6/" rel="tag"><i class="fa fa-tasks"></i> 开源组件</a>
+              <a href="/tags/%E6%9C%8D%E5%8A%A1%E6%90%AD%E5%BB%BA/" rel="tag"><i class="fa fa-tasks"></i> 服务搭建</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/05/14/K8S%E5%88%9B%E5%BB%BASA%E7%94%A8%E6%88%B7/" rel="prev" title="K8S创建SA用户">
+      <i class="fa fa-chevron-left"></i> K8S创建SA用户
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%83%A8%E7%BD%B2%E6%B5%81%E7%A8%8B"><span class="nav-number">2.</span> <span class="nav-text">部署流程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="nav-number">2.1.</span> <span class="nav-text">准备工作</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%80%E9%9C%80%E7%8E%AF%E5%A2%83%E5%8F%8A%E4%BE%9D%E8%B5%96"><span class="nav-number">2.1.0.1.</span> <span class="nav-text">所需环境及依赖</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1%E3%80%81%E5%88%B6%E4%BD%9C%E9%95%9C%E5%83%8F"><span class="nav-number">2.1.0.2.</span> <span class="nav-text">1、制作镜像</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E5%88%9B%E5%BB%BA%E6%95%B0%E6%8D%AE%E5%BA%93%E7%8E%AF%E5%A2%83"><span class="nav-number">2.1.0.3.</span> <span class="nav-text">2 创建数据库环境</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E5%9C%A8K8S%E9%9B%86%E7%BE%A4%E4%B8%AD%E9%83%A8%E7%BD%B2"><span class="nav-number">2.1.0.4.</span> <span class="nav-text">3 在K8S集群中部署</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-%E9%83%A8%E7%BD%B2%E6%96%87%E4%BB%B6"><span class="nav-number">2.1.0.5.</span> <span class="nav-text">4 部署文件</span></a></li></ol></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Wzzz"
+      src="/images/dog.jpeg">
+  <p class="site-author-name" itemprop="name">Wzzz</p>
+  <div class="site-description" itemprop="description">努力努力再努力</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wzzz-wang" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wzzz-wang" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Wzzz</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  <script defer src="/lib/three/three.min.js"></script>
+    <script defer src="/lib/three/three-waves.min.js"></script>
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
