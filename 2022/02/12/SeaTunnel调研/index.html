@@ -28,7 +28,7 @@
 <meta property="og:description" content="前言目前在学习和复习Spark的知识，然后老师说可以调研一下WaterDrop这个组件，然后就去GitHub搜了一下，目前已经改名叫SeaTunnel了，可能他们觉得水滴太小，不太符合他们高性能处理大量数据的调性，改成了SeaTunnel，也许更能表演他们应用的功能和性能。：）在2021年12月9日，SeaTunnel成功进入 Apache 孵化器。值得一提的是这个组件的两个创始人都是中国人。Gi">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-02-12T10:28:10.000Z">
-<meta property="article:modified_time" content="2022-02-12T18:14:51.056Z">
+<meta property="article:modified_time" content="2022-02-12T18:19:26.181Z">
 <meta property="article:author" content="Wzzz">
 <meta property="article:tag" content="开源组件">
 <meta property="article:tag" content="服务搭建">
@@ -203,7 +203,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-02-13 02:14:51" itemprop="dateModified" datetime="2022-02-13T02:14:51+08:00">2022-02-13</time>
+                <time title="修改时间：2022-02-13 02:19:26" itemprop="dateModified" datetime="2022-02-13T02:19:26+08:00">2022-02-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -226,7 +226,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>目前在学习和复习Spark的知识，然后老师说可以调研一下<code>WaterDrop</code>这个组件，然后就去GitHub搜了一下，目前已经改名叫<code>SeaTunnel</code>了，可能他们觉得水滴太小，不太符合他们高性能处理大量数据的调性，改成了<code>SeaTunnel</code>，也许更能表演他们应用的功能和性能。：）在2021年12月9日，SeaTunnel成功进入 Apache 孵化器。值得一提的是这个组件的两个创始人都是中国人。<br><a target="_blank" rel="noopener" href="https://www.apolloconfig.com/#/zh/README">GitHub地址</a><br><a target="_blank" rel="noopener" href="https://interestinglab.github.io/seatunnel-docs/#/">官网地址</a></p>
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>目前在学习和复习Spark的知识，然后老师说可以调研一下<code>WaterDrop</code>这个组件，然后就去GitHub搜了一下，目前已经改名叫<code>SeaTunnel</code>了，可能他们觉得水滴太小，不太符合他们高性能处理大量数据的调性，改成了<code>SeaTunnel</code>，也许更能表演他们应用的功能和性能。：）在2021年12月9日，SeaTunnel成功进入 Apache 孵化器。值得一提的是这个组件的两个创始人都是中国人。<br><a target="_blank" rel="noopener" href="https://github.com/apache/incubator-seatunnel">GitHub地址</a><br><a target="_blank" rel="noopener" href="https://interestinglab.github.io/seatunnel-docs/#/">官网地址</a></p>
 <span id="more"></span>
 
 <h1 id="什么是SeaTunnel"><a href="#什么是SeaTunnel" class="headerlink" title="什么是SeaTunnel"></a>什么是SeaTunnel</h1><p>首先在调研这个组件时候要了解什么是SeaTunnel，根据官网的介绍，<code>SeaTunnel 是一个非常易用的支持海量数据实时同步的超高性能分布式数据集成平台，每天可以稳定高效同步数百亿数据。</code><br>简单来说，我对SeaTunnel的理解就是一个ETL应用，可以将不通数据源中的数据导入到你想要的存储容器或消息队列中，这其中包括了目前很多主流的存储介质，包括单不限于HDFS，KAFKA，Socket，Druid，ClickHouse等等。<br>SeaTunnel是依托于Spark构建开发的，Spark在批处理上的性能强大是众所周知的，但是对于Spark的编程是有门槛的，所以SeaTunnel致力于将Spark变得更加简单，更加高效，减少学习成本，加强分布式数据处理的能力。<br>至于SeaTunnel的数据处理流程，官网上介绍的清晰明了，我这里就不增加大家的阅读障碍了，可以直接移步官网阅读。<br>接下来我就使用SeaTunnel来做一个简单的数据处理。</p>
