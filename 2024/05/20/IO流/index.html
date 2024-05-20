@@ -27,13 +27,13 @@
 <meta property="og:site_name" content="Wzzz">
 <meta property="og:description" content="什么是IO？IO是Input和Output的缩写，即输入和输出。广义上的围绕计算机的输入输出有很多：鼠标、键盘、扫描仪等等。而我们今天要探讨的是在计算机里面，主要是作用在内存、网卡、硬盘等硬件设备上的输入输出操作。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://wzzz-wang.github.io/2024/05/20/IO%E6%B5%81/media/17161712771247.jpg">
+<meta property="og:image" content="http://wzzz-wang.github.io/2024/05/20/IO%E6%B5%81/%E5%86%85%E6%A0%B8%E7%A9%BA%E9%97%B4.png">
 <meta property="article:published_time" content="2024-05-20T02:12:59.000Z">
-<meta property="article:modified_time" content="2024-05-20T02:15:49.602Z">
+<meta property="article:modified_time" content="2024-05-20T02:36:13.860Z">
 <meta property="article:author" content="Wzzz">
 <meta property="article:tag" content="基础学习">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://wzzz-wang.github.io/2024/05/20/IO%E6%B5%81/media/17161712771247.jpg">
+<meta name="twitter:image" content="http://wzzz-wang.github.io/2024/05/20/IO%E6%B5%81/%E5%86%85%E6%A0%B8%E7%A9%BA%E9%97%B4.png">
 
 <link rel="canonical" href="http://wzzz-wang.github.io/2024/05/20/IO%E6%B5%81/">
 
@@ -198,7 +198,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2024-05-20 10:12:59 / 修改时间：10:15:49" itemprop="dateCreated datePublished" datetime="2024-05-20T10:12:59+08:00">2024-05-20</time>
+              <time title="创建时间：2024-05-20 10:12:59 / 修改时间：10:36:13" itemprop="dateCreated datePublished" datetime="2024-05-20T10:12:59+08:00">2024-05-20</time>
             </span>
 
           
@@ -218,7 +218,7 @@
 <p>谈起IO的模型，有一坨混乱的概念，“阻塞”、“非阻塞”，“同步”、“异步”有什么区别？</p>
 <p>这里简单地去解释下为啥会出现这种现象，其中一个很重要的原因就是大家看到的资料对概念的解释都站在了不同的角度，有的站在了底层内核的视角，有的直接在java层面或者Netty框架层面给大家介绍API，所以给大家造成了一定程度的困扰。</p>
 <p>我将会从底层内核的层面给大家讲解下IO。因为万变不离其宗，只有了解了底层原理，不管语言层面如何花里胡哨，我们都能以不变应万变。</p>
-<h3 id="用户空间和内核空间"><a href="#用户空间和内核空间" class="headerlink" title="用户空间和内核空间"></a>用户空间和内核空间</h3><p><img src="media/17161712771247.jpg"></p>
+<h3 id="用户空间和内核空间"><a href="#用户空间和内核空间" class="headerlink" title="用户空间和内核空间"></a>用户空间和内核空间</h3><p><img src="%E5%86%85%E6%A0%B8%E7%A9%BA%E9%97%B4.png" alt="内核空间"></p>
 <h5 id="硬件层（Hardware）"><a href="#硬件层（Hardware）" class="headerlink" title="硬件层（Hardware）"></a>硬件层（Hardware）</h5><p>包括和我们熟知的和IO相关的CPU、内存、磁盘和网卡几个硬件；</p>
 <h5 id="内核空间（Kernel-Space）"><a href="#内核空间（Kernel-Space）" class="headerlink" title="内核空间（Kernel Space）"></a>内核空间（Kernel Space）</h5><p>计算机开机后首先会运行内核程序，内核程序占用的一块私有的空间就是内核空间，并且可支持访问CPU所有的指令集（ring0 - ring3）以及所有的内存空间、IO及硬件设备；</p>
 <h5 id="用户空间（User-Space）"><a href="#用户空间（User-Space）" class="headerlink" title="用户空间（User Space）"></a>用户空间（User Space）</h5><p>每个普通的用户进程都有一个单独的用户空间，用户空间只能访问受限的资源（CPU的“保护模式”）也就是说用户空间是无法直接操作像内存、网卡和磁盘等硬件的；</p>
@@ -329,7 +329,10 @@
     <a href="/2024/04/12/Kyuubi%E7%BB%93%E5%90%88Zookeeper/" rel="prev" title="Kyuubi结合Zookeeper">
       <i class="fa fa-chevron-left"></i> Kyuubi结合Zookeeper
     </a></div>
-      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2024/05/20/Mysql%E8%AE%B0%E5%BD%95%E5%AD%98%E5%82%A8/" rel="next" title="Mysql记录存储">
+      Mysql记录存储 <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
       </footer>
     
@@ -404,7 +407,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-count">11</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
