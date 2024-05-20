@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"wzzz-wang.github.io","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="什么是IO？IO是Input和Output的缩写，即输入和输出。广义上的围绕计算机的输入输出有很多：鼠标、键盘、扫描仪等等。而我们今天要探讨的是在计算机里面，主要是作用在内存、网卡、硬盘等硬件设备上的输入输出操作。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="IO流">
+<meta property="og:url" content="http://wzzz-wang.github.io/2024/05/20/IO%E6%B5%81/index.html">
+<meta property="og:site_name" content="Wzzz">
+<meta property="og:description" content="什么是IO？IO是Input和Output的缩写，即输入和输出。广义上的围绕计算机的输入输出有很多：鼠标、键盘、扫描仪等等。而我们今天要探讨的是在计算机里面，主要是作用在内存、网卡、硬盘等硬件设备上的输入输出操作。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://wzzz-wang.github.io/2024/05/20/IO%E6%B5%81/media/17161712771247.jpg">
+<meta property="article:published_time" content="2024-05-20T02:12:59.000Z">
+<meta property="article:modified_time" content="2024-05-20T02:15:49.602Z">
+<meta property="article:author" content="Wzzz">
+<meta property="article:tag" content="基础学习">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://wzzz-wang.github.io/2024/05/20/IO%E6%B5%81/media/17161712771247.jpg">
+
+<link rel="canonical" href="http://wzzz-wang.github.io/2024/05/20/IO%E6%B5%81/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>IO流 | Wzzz</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Wzzz</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Staying Focused</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://wzzz-wang.github.io/2024/05/20/IO%E6%B5%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/dog.jpeg">
+      <meta itemprop="name" content="Wzzz">
+      <meta itemprop="description" content="努力努力再努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Wzzz">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          IO流<a href="https://github.com/user-name/repo-name/tree/master/source/_posts/_posts/IO%E6%B5%81.md" class="post-edit-link" title="编辑" rel="noopener" target="_blank"><i class="fa fa-pencil-alt"></i></a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2024-05-20 10:12:59 / 修改时间：10:15:49" itemprop="dateCreated datePublished" datetime="2024-05-20T10:12:59+08:00">2024-05-20</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="什么是IO？"><a href="#什么是IO？" class="headerlink" title="什么是IO？"></a>什么是IO？</h3><p>IO是Input和Output的缩写，即输入和输出。广义上的围绕计算机的输入输出有很多：鼠标、键盘、扫描仪等等。而我们今天要探讨的是在计算机里面，主要是作用在内存、网卡、硬盘等硬件设备上的输入输出操作。</p>
+<span id="more"></span>
+
+<p>谈起IO的模型，有一坨混乱的概念，“阻塞”、“非阻塞”，“同步”、“异步”有什么区别？</p>
+<p>这里简单地去解释下为啥会出现这种现象，其中一个很重要的原因就是大家看到的资料对概念的解释都站在了不同的角度，有的站在了底层内核的视角，有的直接在java层面或者Netty框架层面给大家介绍API，所以给大家造成了一定程度的困扰。</p>
+<p>我将会从底层内核的层面给大家讲解下IO。因为万变不离其宗，只有了解了底层原理，不管语言层面如何花里胡哨，我们都能以不变应万变。</p>
+<h3 id="用户空间和内核空间"><a href="#用户空间和内核空间" class="headerlink" title="用户空间和内核空间"></a>用户空间和内核空间</h3><p><img src="media/17161712771247.jpg"></p>
+<h5 id="硬件层（Hardware）"><a href="#硬件层（Hardware）" class="headerlink" title="硬件层（Hardware）"></a>硬件层（Hardware）</h5><p>包括和我们熟知的和IO相关的CPU、内存、磁盘和网卡几个硬件；</p>
+<h5 id="内核空间（Kernel-Space）"><a href="#内核空间（Kernel-Space）" class="headerlink" title="内核空间（Kernel Space）"></a>内核空间（Kernel Space）</h5><p>计算机开机后首先会运行内核程序，内核程序占用的一块私有的空间就是内核空间，并且可支持访问CPU所有的指令集（ring0 - ring3）以及所有的内存空间、IO及硬件设备；</p>
+<h5 id="用户空间（User-Space）"><a href="#用户空间（User-Space）" class="headerlink" title="用户空间（User Space）"></a>用户空间（User Space）</h5><p>每个普通的用户进程都有一个单独的用户空间，用户空间只能访问受限的资源（CPU的“保护模式”）也就是说用户空间是无法直接操作像内存、网卡和磁盘等硬件的；</p>
+<p>如上所述，那我们可能会有疑问，用户空间的进程想要去访问或操作磁盘和网卡该怎么办呢？<br>为此，操作系统在内核中开辟了一块唯一且合法的调用入口“System Call Interface”，也就是我们常说的系统调用，系统调用为上层用户提供了一组能够操作底层硬件的API。这样一来，用户进程就可以通过系统调用访问到操作系统内核，进而就能够间接地完成对底层硬件的操作。这个访问的过程也即用户态到内核态的切换。常见的系统调用有很多，比如：内存映射mmap()、文件操作类的open()、IO读写read()、write()等等。</p>
+<h3 id="IO模型"><a href="#IO模型" class="headerlink" title="IO模型"></a>IO模型</h3><h4 id="BIO（Blocking-IO）"><a href="#BIO（Blocking-IO）" class="headerlink" title="BIO（Blocking IO）"></a>BIO（Blocking IO）</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">ServerSocket serverSocket &#x3D; new ServerSocket(8080);        &#x2F;&#x2F; step1: 创建一个ServerSocket，并监听8080端口</span><br><span class="line">while(true) &#123;                                              &#x2F;&#x2F; step2: 主线程进入死循环</span><br><span class="line">    Socket socket &#x3D; serverSocket.accept();                 &#x2F;&#x2F; step3: 线程阻塞，开启监听</span><br><span class="line">      </span><br><span class="line">    BufferedReader reader &#x3D; new BufferedReader(nwe InputStreamReader(socket.getInputStream()));</span><br><span class="line">    System.out.println(&quot;read data: &quot; + reader.readLine()); &#x2F;&#x2F; step4: 数据读取</span><br><span class="line">  </span><br><span class="line">  </span><br><span class="line">    PrintWriter print &#x3D; new PrintWriter(socket.getOutputStream(), true);</span><br><span class="line">    print.println(&quot;write data&quot;);                           &#x2F;&#x2F; step5: socket数据写入</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以上是一段JAVA伪代码<br>主要分为四个步骤</p>
+<ol>
+<li>创建ServerSocket，并监听8080端口；</li>
+<li>主线程进入死循环，用来阻塞监听客户端的连接，socket.accept()；</li>
+<li>数据读取，socket.read()；</li>
+<li>写入数据，socket.write()；</li>
+</ol>
+<p>上面的代码出现的问题：线程阻塞！<br>阻塞的点，accept(…)、read(…)、write(…)</p>
+<p>一个服务端一次只能处理一个客户端的请求，当有多个客户端请求到来时，其他客户端必须等待。</p>
+<p>肯定有人说，那我一个客户端一个线程不就好了么，当然了，这确实可以，但是这并不能改变他线程阻塞的事实，并且，频繁的创建线程，销毁线程也会带来新的问题</p>
+<ol>
+<li>线程频繁的创建与销毁，带来的一定的消耗，当然这个问题可以通过线程池来解决。</li>
+<li>在IO业务中的线程一般与CPU核心数保持相一致即可，否则线程之间的上下文切换会额外增加系统的响应时间。</li>
+</ol>
+<p>总的来说，线程的数量一定是需要严格控制的，当客户端到达一定数量时，服务端任然只能处理部分客户端的请求，其余的只能等待。<br>所以，即便使用了多线程时，也无法改变客户端连接限制的问题。<br>另外，当客户端发送数据之后，还需要服务端执行read(…)来主动获取数据，这种情况就形成了同步阻塞。</p>
+<p>BIO看上去非常的简单，事实上采用“BIO+线程池”来处理少量的并发请求还是比较合适的，也是最优的。但是面临数量庞大的客户端和请求，这时候使用多线程的弊端就逐渐凸显出来了：</p>
+<ol>
+<li>严重依赖线程，线程还是比较耗系统资源的（一个线程大约占用1M的空间）；</li>
+<li>频繁地创建和销毁代价很大，因为涉及到复杂的系统调用；</li>
+<li>线程间上下文切换的成本很高，因为发生线程切换前，需要保留上一个任务的状态，以便切回来的时候，可以再次加载这个任务的状态。如果线程数量庞大，会造成线程做上下文切换的时间甚至大于线程执行的时间，CPU负载变高。</li>
+</ol>
+<h4 id="NIO非阻塞模型（Non-Blocking-IO）"><a href="#NIO非阻塞模型（Non-Blocking-IO）" class="headerlink" title="NIO非阻塞模型（Non-Blocking IO）"></a>NIO非阻塞模型（Non-Blocking IO）</h4><p>由于BIO可能会引入的大量线程，所以可以简单地理解NIO处理问题的方式是通过单线程或者少量线程达到处理大量客户端请求的目的。为了达成这个目的，首先要做的就是把阻塞的过程非阻塞化。要想做到非阻塞，那必须得要有内核的支持，同时需要对用户空间的进程暴露系统调用函数。所以，这里的“非阻塞”可以理解成系统调用API级别的，而真正底层的IO操作都是阻塞的，我们后面会慢慢介绍。</p>
+<p>内核已经对“非阻塞”做好了支持，举个我们刚刚说的的accept()方法阻塞的例子，官方文档对accetp()系统调用的描述是通过把”flags”参数设成”SOCK_NONBLOCK”就可以达到非阻塞的目的，非阻塞之后线程会一直处理轮询调用，这时候可以通过每次返回特殊的异常码“EAGAIN”或”EWOULDBLOCK”告诉主程序还没有连接到达可以继续轮询。</p>
+<p>我们可以很容易想象程序非阻塞之后的一个大致过程。所以，非阻塞模式有个最大的特点就是：用户进程需要不断去主动询问内核数据准备好了没有。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 循环遍历</span><br><span class="line">while(1) &#123;</span><br><span class="line">    &#x2F;&#x2F; 遍历fd集合</span><br><span class="line">    for (fdx in range(fd1, fdn)) &#123;</span><br><span class="line">        &#x2F;&#x2F; 如果fdx有数据</span><br><span class="line">        if (null !&#x3D; fdx.data) &#123;</span><br><span class="line">            &#x2F;&#x2F; 进行读取和处理</span><br><span class="line">            read(fdx)&amp;handle(fdx);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的是一段非阻塞的伪代码，通过代码也能看出非阻塞的弊端，需要让用户进程不断切换到内核态，对连接状态或读写数据做轮询。有没有一种方式来简化用户空间for循环轮询的过程呢？那就是我们下面要重点介绍的IO多路复用模型。</p>
+<h4 id="IO多路复用模型"><a href="#IO多路复用模型" class="headerlink" title="IO多路复用模型"></a>IO多路复用模型</h4><p>非阻塞模型会让用户进程一直轮询调用系统函数，频繁地做内核态切换。想要做优化其实也比较简单，我们假想个业务场景，A业务系统会调用B的基础服务查询单个用户的信息。随着业务的发展，A的逻辑变复杂了，需要查100个用户的信息。很明显，A希望B提供一个批量查询的接口，用集合作为入参，一次性把数据传递过去就省去了频繁的系统间调用。</p>
+<p>多路复用实际也差不多就是这个实现思路，只不过入参这个“集合”需要你注册/填写感兴趣的事件，读fd、写fd或者连接状态的fd等，然后交给内核帮你进行处理。</p>
+<p>那我们就具体来看看多路复用里面大家都可能听过的几个系统调用 - select()、poll()、epoll()。</p>
+<h5 id="select"><a href="#select" class="headerlink" title="select()"></a>select()</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;**</span><br><span class="line"> * select()系统调用</span><br><span class="line"> *</span><br><span class="line"> * 参数列表：</span><br><span class="line"> *     nfds       - 值为最大的文件描述符+1</span><br><span class="line"> *    *readfds    - 用户检查可读性</span><br><span class="line"> *    *writefds   - 用户检查可写性</span><br><span class="line"> *    *exceptfds  - 用于检查外带数据</span><br><span class="line"> *    *timeout    - 超时时间的结构体指针</span><br><span class="line"> *&#x2F;</span><br><span class="line">int select（int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout）;</span><br></pre></td></tr></table></figure>
+<p>官方文档对select()的描述：</p>
+<p>DESCRIPTION<br>select() and pselect() allow a program to monitor multiple file descriptors, waiting until one or more of the file descriptors become “ready” for some class of I/O operation (e.g.,input possible). A file descriptor is considered ready if it is possible to perform the corresponding I/O operation (e.g., read(2)) without blocking.</p>
+<p>select()允许程序监控多个fd，阻塞等待直到一个或多个fd到达”就绪”状态。<br>内核使用select()为用户进程提供了类似批量的接口，函数本身也会一直阻塞直到有fd为就绪状态返回。下面我们来具体看下select()函数实现，以便我们更好地分析它有哪些优缺点。在select()函数的构造器里，容易看到”fd_set”这个入参类型。它是用位图算法bitmap实现的，使用了一个大小固定的数组（fd_set设置了FD_SETSIZE固定长度为1024），数组中的每个元素都是0和1这样的二进制byte，0,1映射fd对应位置上是否有读写事件，举例：如果fd == 5，那么fd_set = 000001000。</p>
+<p>同时 fd_set 定义了四个宏来处理bitmap：</p>
+<ul>
+<li>FD_ZERO(&amp;set);  //  初始化，清空的作用，使集合中不含任何fd</li>
+<li>FD_SET(fd, &amp;set); // 将fd加入set集合，给某个位置赋值的操作</li>
+<li>FD_CLR(fd, &amp;set);  //  将fd从set集合中清除，去掉某个位置的值</li>
+<li>FD_ISSET(fd, &amp;set);  // 校验某位置的fd是否在集合中</li>
+</ul>
+<p>使用bitmap算法的好处非常明显，运算效率高，占用内存少（使用了一个byte，8bit）。<br>但是也可以看到select()系统调用的弊端也是比较明显的：</p>
+<ul>
+<li>复杂度O(n)，轮询的任务交给了内核来做，复杂度并没有变化，数据取出后也需要轮询哪个fd上发生了变动；</li>
+<li>用户态还是需要不断切换到内核态，直到所有的fds数据读取结束，整体开销依然很大；</li>
+<li>fd_set有大小的限制，目前被硬编码成了1024；</li>
+<li>fd_set不可重用，每次操作完都必须重置；</li>
+</ul>
+<h5 id="poll"><a href="#poll" class="headerlink" title="poll()"></a>poll()</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;**</span><br><span class="line"> * poll()系统调用</span><br><span class="line"> *</span><br><span class="line"> * 参数列表：</span><br><span class="line"> *    *fds         - pollfd结构体</span><br><span class="line"> *     nfds        - 要监视的描述符的数量</span><br><span class="line"> *     timeout     - 等待时间</span><br><span class="line"> *&#x2F;</span><br><span class="line">int poll（struct pollfd *fds, nfds_t nfds, int *timeout）;</span><br><span class="line">  </span><br><span class="line">  </span><br><span class="line">* pollfd的结构体</span><br><span class="line">struct pollfd&#123;</span><br><span class="line">　int fd；&#x2F;&#x2F; 文件描述符</span><br><span class="line">　short event；&#x2F;&#x2F; 请求的事件</span><br><span class="line">　short revent；&#x2F;&#x2F; 返回的事件</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>官方文档对poll()的描述：</p>
+<p>DESCRIPTION</p>
+<p>poll() performs a similar task to select(2): it waits for one of a set of file descriptors to become ready to perform I/O.</p>
+<p>poll() 非常像select()，它也是阻塞等待直到一个或多个fd到达”就绪”状态。</p>
+<p>看官方文档描述可以知道，poll()和select()是非常相似的，唯一的区别在于poll()摒弃掉了位图算法，使用自定义的结构体pollfd，在pollfd内部封装了fd，并通过event变量注册感兴趣的可读可写事件（POLLIN、POLLOUT），最后把 pollfd 交给内核。当有读写事件触发的时候，我们可以通过轮询 pollfd，判断revent确定该fd是否发生了可读可写事件。</p>
+<p>poll() 相对于select()，主要的优势是使用了pollfd的结构体：</p>
+<ul>
+<li>没有了bitmap大小1024的限制；</li>
+<li>通过结构体中的revents置位；</li>
+</ul>
+<p>但是用户态到内核态切换及O(n)复杂度的问题依旧存在。</p>
+<h5 id="epoll"><a href="#epoll" class="headerlink" title="epoll()"></a>epoll()</h5><p>epoll()应该是目前最主流，使用范围最广的一组多路复用的函数调用，像我们熟知的Nginx、Redis都广泛地使用了此种模式。epoll()的实现采用了“三步走”策略，它们分别是epoll_create()、epoll_ctl()、epoll_wait()。</p>
+<h6 id="epoll-create"><a href="#epoll-create" class="headerlink" title="epoll_create()"></a>epoll_create()</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;**</span><br><span class="line"> * 返回专用的文件描述符</span><br><span class="line"> *&#x2F;</span><br><span class="line">int epoll_create（int size）;</span><br></pre></td></tr></table></figure>
+
+<p>用户进程通过 epoll_create() 函数在内核空间里面创建了一块空间（为了便于理解，可以想象成创建了一块白板），并返回了描述此空间的fd。</p>
+<h6 id="epoll-ctl"><a href="#epoll-ctl" class="headerlink" title="epoll_ctl()"></a>epoll_ctl()</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;**</span><br><span class="line"> * epoll_ctl()系统调用</span><br><span class="line"> *</span><br><span class="line"> * 参数列表：</span><br><span class="line"> *     epfd       - 由epoll_create()返回的epoll专用的文件描述符</span><br><span class="line"> *     op         - 要进行的操作例如注册事件,可能的取值:注册-EPOLL_CTL_ADD、修改-EPOLL_CTL_MOD、删除-EPOLL_CTL_DEL</span><br><span class="line"> *     fd         - 关联的文件描述符</span><br><span class="line"> *     event      - 指向epoll_event的指针</span><br><span class="line"> *&#x2F;</span><br><span class="line">int epoll_ctl（int epfd, int op, int fd , struce epoll_event *event ）;</span><br></pre></td></tr></table></figure>
+<p>刚刚我们说通过epoll_create()可以创建一块具体的空间“白板”，那么通过epoll_ctl() 我们可以通过自定义的epoll_event结构体在这块”白板上”注册感兴趣的事件了。</p>
+<p>注册 - EPOLL_CTL_ADD<br>修改 - EPOLL_CTL_MOD<br>删除 - EPOLL_CTL_DEL</p>
+<h5 id="epoll-wait"><a href="#epoll-wait" class="headerlink" title="epoll_wait()"></a>epoll_wait()</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;**</span><br><span class="line"> * epoll_wait()返回n个可读可写的fds</span><br><span class="line"> *</span><br><span class="line"> * 参数列表：</span><br><span class="line"> *     epfd           - 由epoll_create()返回的epoll专用的文件描述符</span><br><span class="line"> *     epoll_event    - 要进行的操作例如注册事件,可能的取值:注册-EPOLL_CTL_ADD、修改-EPOLL_CTL_MOD、删除-EPOLL_CTL_DEL</span><br><span class="line"> *     maxevents      - 每次能处理的事件数</span><br><span class="line"> *     timeout        - 等待I&#x2F;O事件发生的超时值；-1相当于阻塞，0相当于非阻塞。一般用-1即可</span><br><span class="line"> *&#x2F;</span><br><span class="line">int epoll_wait（int epfd, struce epoll_event *event , int maxevents, int timeout）;</span><br></pre></td></tr></table></figure>
+
+<p>epoll_wait() 会一直阻塞等待，直到硬盘、网卡等硬件设备数据准备完成后发起硬中断，中断CPU，CPU会立即执行数据拷贝工作，数据从磁盘缓冲传输到内核缓冲，同时将准备完成的fd放到就绪队列中供用户态进行读取。用户态阻塞停止，接收到具体数量的可读写的fds，返回用户态进行数据处理。</p>
+<p>epoll() 基本上完美地解决了 poll() 函数遗留的两个问题：</p>
+<ul>
+<li>没有了频繁的用户态到内核态的切换；</li>
+<li>O(1)复杂度，返回的”nfds”是一个确定的可读写的数量，相比于之前循环n次来确认，复杂度降低了不少；</li>
+</ul>
+<h3 id="同步、异步"><a href="#同步、异步" class="headerlink" title="同步、异步"></a>同步、异步</h3><p>其实在很多场景下同步&amp;异步和阻塞&amp;非阻塞基本上是一个同义词。阻塞和非阻塞适合从系统调用API层面来看，就像我们本文介绍的select()、poll()这样的系统调用，同步和异步更适合站在应用程序的角度来看。应用程序在同步执行代码片段的时候结果不会立即返回，这时候底层IO操作不一定是阻塞的，也完全有可能是非阻塞。所以说：</p>
+<ul>
+<li>阻塞和非阻塞：读写没有就绪或者读写没有完成，函数是否要一直等待还是采用轮询；</li>
+<li>同步和异步：同步是读写由应用程序完成。异步是读写由操作系统来完成，并通过回调的机制通知应用程序。</li>
+</ul>
+<p>这边顺便提两种大家可能会经常听到的模式：Reactor和Preactor。</p>
+<ul>
+<li>Reactor 模式：主动模式。</li>
+<li>Preactor 模式：被动模式。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0/" rel="tag"><i class="fa fa-tasks"></i> 基础学习</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/04/12/Kyuubi%E7%BB%93%E5%90%88Zookeeper/" rel="prev" title="Kyuubi结合Zookeeper">
+      <i class="fa fa-chevron-left"></i> Kyuubi结合Zookeeper
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFIO%EF%BC%9F"><span class="nav-number">1.</span> <span class="nav-text">什么是IO？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E7%A9%BA%E9%97%B4%E5%92%8C%E5%86%85%E6%A0%B8%E7%A9%BA%E9%97%B4"><span class="nav-number">2.</span> <span class="nav-text">用户空间和内核空间</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%A1%AC%E4%BB%B6%E5%B1%82%EF%BC%88Hardware%EF%BC%89"><span class="nav-number">2.0.1.</span> <span class="nav-text">硬件层（Hardware）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%86%85%E6%A0%B8%E7%A9%BA%E9%97%B4%EF%BC%88Kernel-Space%EF%BC%89"><span class="nav-number">2.0.2.</span> <span class="nav-text">内核空间（Kernel Space）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E7%A9%BA%E9%97%B4%EF%BC%88User-Space%EF%BC%89"><span class="nav-number">2.0.3.</span> <span class="nav-text">用户空间（User Space）</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IO%E6%A8%A1%E5%9E%8B"><span class="nav-number">3.</span> <span class="nav-text">IO模型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#BIO%EF%BC%88Blocking-IO%EF%BC%89"><span class="nav-number">3.1.</span> <span class="nav-text">BIO（Blocking IO）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#NIO%E9%9D%9E%E9%98%BB%E5%A1%9E%E6%A8%A1%E5%9E%8B%EF%BC%88Non-Blocking-IO%EF%BC%89"><span class="nav-number">3.2.</span> <span class="nav-text">NIO非阻塞模型（Non-Blocking IO）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8%E6%A8%A1%E5%9E%8B"><span class="nav-number">3.3.</span> <span class="nav-text">IO多路复用模型</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#select"><span class="nav-number">3.3.1.</span> <span class="nav-text">select()</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#poll"><span class="nav-number">3.3.2.</span> <span class="nav-text">poll()</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#epoll"><span class="nav-number">3.3.3.</span> <span class="nav-text">epoll()</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#epoll-create"><span class="nav-number">3.3.3.1.</span> <span class="nav-text">epoll_create()</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#epoll-ctl"><span class="nav-number">3.3.3.2.</span> <span class="nav-text">epoll_ctl()</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#epoll-wait"><span class="nav-number">3.3.4.</span> <span class="nav-text">epoll_wait()</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%8C%E6%AD%A5%E3%80%81%E5%BC%82%E6%AD%A5"><span class="nav-number">4.</span> <span class="nav-text">同步、异步</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Wzzz"
+      src="/images/dog.jpeg">
+  <p class="site-author-name" itemprop="name">Wzzz</p>
+  <div class="site-description" itemprop="description">努力努力再努力</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wzzz-wang" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wzzz-wang" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Wzzz</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  <script defer src="/lib/three/three.min.js"></script>
+    <script defer src="/lib/three/three-waves.min.js"></script>
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
